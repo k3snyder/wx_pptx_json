@@ -1,0 +1,16 @@
+{
+  "name": "webex-pptx-json-bot",
+  "version": "1.0.0",
+  "description": "Webex websocket bot that extracts PPTX text to JSON via Python backend",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "uuid": "^9.0.1",
+    "webex": "^1.141.0"
+  }
+}
