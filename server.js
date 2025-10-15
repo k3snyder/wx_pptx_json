@@ -212,7 +212,17 @@ async function handleMessageCreated(evt) {
     const res = await downloadWithRetry(selectedUrl, 'arraybuffer');
     const id = uuidv4();
     const tmpPath = path.join(TMP_DIR, `${id}-${fileName || 'upload.pptx'}`);
-    await fsp.writeFile(tmpPath, res.data);
+    const buffer = Buffer.isBuffer(res.data) ? res.data : Buffer.from(res.data);
+    if (buffer.length === 0) {
+      throw new Error('Downloaded file was empty (size 0 bytes)');
+    }
+    if (buffer.slice(0, 2).toString('utf8') !== 'PK') {
+      const sample = buffer.slice(0, 128).toString('utf8');
+      throw new Error(
+        `Downloaded file is not a PPTX (content-type ${res.headers['content-type']}); first bytes: ${sample}`
+      );
+    }
+    await fsp.writeFile(tmpPath, buffer);
 
     // Run Python extractor
     const jsonObj = await runPythonExtractor(tmpPath);
