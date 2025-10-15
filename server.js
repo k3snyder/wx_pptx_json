@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const Webex = require('webex');
 const axios = require('axios').default;
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
@@ -23,6 +24,13 @@ const TMP_DIR = path.join(os.tmpdir(), 'webex-pptx-json-bot');
 fs.mkdirSync(TMP_DIR, { recursive: true });
 
 const MAX_MARKDOWN_BYTES = 7000; // API limit is ~7439 bytes; keep a safety margin. :contentReference[oaicite:1]{index=1}
+
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || null;
+const axiosClient = axios.create({
+  proxy: false,
+  httpsAgent: proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined,
+  timeout: 30000
+});
 
 const webex = Webex.init({
   credentials: { access_token: BOT_TOKEN },
@@ -78,7 +86,7 @@ function parseFilenameFromContentDisposition(cd) {
 }
 
 async function headContent(url) {
-  const res = await axios.head(url, {
+  const res = await axiosClient.head(url, {
     headers: { Authorization: `Bearer ${BOT_TOKEN}` },
     validateStatus: () => true
   });
@@ -92,7 +100,7 @@ async function headContent(url) {
 async function downloadWithRetry(url, responseType = 'arraybuffer', maxAttempts = 4) {
   let attempt = 0;
   while (attempt < maxAttempts) {
-    const res = await axios.get(url, {
+    const res = await axiosClient.get(url, {
       headers: { Authorization: `Bearer ${BOT_TOKEN}` },
       responseType,
       validateStatus: () => true
